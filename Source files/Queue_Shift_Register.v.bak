@@ -1,0 +1,26 @@
+module Queue_Shift_Register (
+
+);
+
+
+
+genvar i;
+generate
+	for (i=0;i<4;i=i+1) begin: Ins
+		Register 
+		#(
+			.DATA_WIDTH(4)) R 
+		(
+			.data_in			(),
+			.dafault_data	(7'b0),
+			.reset			(reset),
+			.enable			(),
+			.flush			(1'b0),
+			.clk				(clk),
+			.data_out		()
+		);
+	end
+endgenerate
+
+
+endmodule
