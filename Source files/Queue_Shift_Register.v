@@ -22,7 +22,15 @@ module Queue_Shift_Register (
 	dispatch_opcode,
 	dispatch_rd_tag,
 	dispatch_enable,
-	issueque_full
+	issueque_full,
+	shift_rs1_tag0,
+	shift_rs1_tag1,
+	shift_rs1_tag2,
+	shift_rs1_tag3,
+	shift_rs2_tag0,
+	shift_rs2_tag1,
+	shift_rs2_tag2,
+	shift_rs2_tag3
 );
 
 //Input and Output declaration.
@@ -50,6 +58,14 @@ input [3:0] dispatch_opcode;
 input [5:0] dispatch_rd_tag;
 input dispatch_enable;
 output issueque_full;
+output [5:0] shift_rs1_tag0;
+output [5:0] shift_rs1_tag1;
+output [5:0] shift_rs1_tag2;
+output [5:0] shift_rs1_tag3;
+output [5:0] shift_rs2_tag0;
+output [5:0] shift_rs2_tag1;
+output [5:0] shift_rs2_tag2;
+output [5:0] shift_rs2_tag3;
 
 //Wires definition:
 wire rs1_valid_input [3:0];
@@ -68,7 +84,7 @@ wire [31:0] rs2_data_reg [4:0];
 
 //Define general assigns
 assign rs1_valid_reg[0] = dispatch_rs1_data_val;
-assign rs2_valid_reg[0] = dispatch_rs1_data_val;
+assign rs2_valid_reg[0] = dispatch_rs2_data_val;
 assign rs1_data_reg[0] = dispatch_rs1_data;
 assign rs2_data_reg[0] = dispatch_rs2_data;
 assign rs1_tag_reg[0] = dispatch_rs1_tag;
@@ -77,6 +93,14 @@ assign rd_tag_reg[0] = dispatch_rd_tag;
 assign opcode_reg[0] = dispatch_opcode;
 assign valid_reg[0] = dispatch_enable;
 assign issueque_full = valid_reg[1] & valid_reg[2] & valid_reg[3] & valid_reg[4];
+assign shift_rs1_tag0 rs1_tag_reg[1];
+assign shift_rs1_tag1 rs1_tag_reg[2];
+assign shift_rs1_tag2 rs1_tag_reg[3];
+assign shift_rs1_tag3 rs1_tag_reg[4];
+assign shift_rs2_tag0 rs2_tag_reg[1];
+assign shift_rs2_tag1 rs2_tag_reg[2];
+assign shift_rs2_tag2 rs2_tag_reg[3];
+assign shift_rs2_tag3 rs2_tag_reg[4];
 
 genvar i;
 generate
