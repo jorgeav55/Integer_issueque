@@ -12,6 +12,7 @@ module Queue_Shift_Register (
 	enable_rs2_data,
 	sel_rs1,
 	sel_rs2,
+	data_sel,
 	CDB_data,
 	dispatch_rs1_data,
 	dispatch_rs1_tag,
@@ -22,7 +23,7 @@ module Queue_Shift_Register (
 	dispatch_opcode,
 	dispatch_rd_tag,
 	dispatch_enable,
-	issueque_full,
+	//issueque_full,
 	shift_rs1_tag0,
 	shift_rs1_tag1,
 	shift_rs1_tag2,
@@ -30,7 +31,23 @@ module Queue_Shift_Register (
 	shift_rs2_tag0,
 	shift_rs2_tag1,
 	shift_rs2_tag2,
-	shift_rs2_tag3
+	shift_rs2_tag3,
+	shift_valid0,
+	shift_valid1,
+	shift_valid2,
+	shift_valid3,
+	shift_rs1_valid0,
+	shift_rs1_valid1,
+	shift_rs1_valid2,
+	shift_rs1_valid3,
+	shift_rs2_valid0,
+	shift_rs2_valid1,
+	shift_rs2_valid2,
+	shift_rs2_valid3,
+	issueque_rs1_data,
+	issueque_rs2_data,
+	issueque_rd_tag,
+	issueque_opcode
 );
 
 //Input and Output declaration.
@@ -47,6 +64,7 @@ input [3:0] enable_rs1_data;
 input [3:0] enable_rs2_data;
 input [3:0] sel_rs1;
 input [3:0] sel_rs2;
+input [1:0] data_sel;
 input [31:0] CDB_data;
 input [31:0] dispatch_rs1_data;
 input [5:0] dispatch_rs1_tag;
@@ -57,7 +75,7 @@ input dispatch_rs2_data_val;
 input [3:0] dispatch_opcode;
 input [5:0] dispatch_rd_tag;
 input dispatch_enable;
-output issueque_full;
+//output issueque_full;
 output [5:0] shift_rs1_tag0;
 output [5:0] shift_rs1_tag1;
 output [5:0] shift_rs1_tag2;
@@ -66,6 +84,22 @@ output [5:0] shift_rs2_tag0;
 output [5:0] shift_rs2_tag1;
 output [5:0] shift_rs2_tag2;
 output [5:0] shift_rs2_tag3;
+output shift_valid0;
+output shift_valid1;
+output shift_valid2;
+output shift_valid3;
+output shift_rs1_valid0;
+output shift_rs1_valid1;
+output shift_rs1_valid2;
+output shift_rs1_valid3;
+output shift_rs2_valid0;
+output shift_rs2_valid1;
+output shift_rs2_valid2;
+output shift_rs2_valid3;
+output reg [31:0] issueque_rs1_data;
+output reg [31:0] issueque_rs2_data;
+output reg [5:0] issueque_rd_tag;
+output reg [3:0] issueque_opcode;
 
 //Wires definition:
 wire rs1_valid_input [3:0];
@@ -92,15 +126,27 @@ assign rs2_tag_reg[0] = dispatch_rs2_tag;
 assign rd_tag_reg[0] = dispatch_rd_tag;
 assign opcode_reg[0] = dispatch_opcode;
 assign valid_reg[0] = dispatch_enable;
-assign issueque_full = valid_reg[1] & valid_reg[2] & valid_reg[3] & valid_reg[4];
-assign shift_rs1_tag0 rs1_tag_reg[1];
-assign shift_rs1_tag1 rs1_tag_reg[2];
-assign shift_rs1_tag2 rs1_tag_reg[3];
-assign shift_rs1_tag3 rs1_tag_reg[4];
-assign shift_rs2_tag0 rs2_tag_reg[1];
-assign shift_rs2_tag1 rs2_tag_reg[2];
-assign shift_rs2_tag2 rs2_tag_reg[3];
-assign shift_rs2_tag3 rs2_tag_reg[4];
+//assign issueque_full = valid_reg[1] & valid_reg[2] & valid_reg[3] & valid_reg[4];
+assign shift_rs1_tag0 = rs1_tag_reg[1];
+assign shift_rs1_tag1 = rs1_tag_reg[2];
+assign shift_rs1_tag2 = rs1_tag_reg[3];
+assign shift_rs1_tag3 = rs1_tag_reg[4];
+assign shift_rs2_tag0 = rs2_tag_reg[1];
+assign shift_rs2_tag1 = rs2_tag_reg[2];
+assign shift_rs2_tag2 = rs2_tag_reg[3];
+assign shift_rs2_tag3 = rs2_tag_reg[4];
+assign shift_valid0 = valid_reg[1];
+assign shift_valid1 = valid_reg[2];
+assign shift_valid2 = valid_reg[3];
+assign shift_valid3 = valid_reg[4];
+assign shift_rs1_valid0 = rs1_valid_reg[1];
+assign shift_rs1_valid1 = rs1_valid_reg[2];
+assign shift_rs1_valid2 = rs1_valid_reg[3];
+assign shift_rs1_valid3 = rs1_valid_reg[4];
+assign shift_rs2_valid0 = rs2_valid_reg[1];
+assign shift_rs2_valid1 = rs2_valid_reg[2];
+assign shift_rs2_valid2 = rs2_valid_reg[3];
+assign shift_rs2_valid3 = rs2_valid_reg[4];
 
 genvar i;
 generate
@@ -187,7 +233,7 @@ generate
 			.enable			(enable_rs1_valid[i]),
 			.flush			(1'b0),
 			.clk				(clk),
-			.data_out		(rs1_valid_reg[i])
+			.data_out		(rs1_valid_reg[i+1])
 		);
 		Register 
 		#(
@@ -199,7 +245,7 @@ generate
 			.enable			(enable_rs2_valid[i]),
 			.flush			(1'b0),
 			.clk				(clk),
-			.data_out		(rs2_valid_reg[i])
+			.data_out		(rs2_valid_reg[i+1])
 		);
 		Register 
 		#(
@@ -213,10 +259,43 @@ generate
 			.clk				(clk),
 			.data_out		(valid_reg[i+1])
 		);
-		assign {rs1_valid_input[i], rs1_data_input[i]} = (sel_rs1[i] == 1'b1) ? {rs1_valid_reg[i], rs1_data_reg[i]} : {1'b0, CDB_data};
-		assign {rs2_valid_input[i], rs2_data_input[i]} = (sel_rs2[i] == 1'b1) ? {rs2_valid_reg[i], rs2_data_reg[i]} : {1'b0, CDB_data};
+		assign {rs1_valid_input[i], rs1_data_input[i]} = (sel_rs1[i] == 1'b1) ? {1'b0, CDB_data} : {rs1_valid_reg[i], rs1_data_reg[i]};
+		assign {rs2_valid_input[i], rs2_data_input[i]} = (sel_rs2[i] == 1'b1) ? {1'b0, CDB_data} : {rs2_valid_reg[i], rs2_data_reg[i]};
 	end
 endgenerate
 
-
+always @* begin
+	case (data_sel)
+		2'b11: begin
+			issueque_rs1_data = rs1_data_reg[4];
+			issueque_rs2_data = rs2_data_reg[4];
+			issueque_rd_tag = rd_tag_reg[4];
+			issueque_opcode = opcode_reg[4];
+		end
+		2'b10: begin
+			issueque_rs1_data = rs1_data_reg[3];
+			issueque_rs2_data = rs2_data_reg[3];
+			issueque_rd_tag = rd_tag_reg[3];
+			issueque_opcode = opcode_reg[3];
+		end
+		2'b01: begin
+			issueque_rs1_data = rs1_data_reg[2];
+			issueque_rs2_data = rs2_data_reg[2];
+			issueque_rd_tag = rd_tag_reg[2];
+			issueque_opcode = opcode_reg[2];
+		end
+		2'b00: begin
+			issueque_rs1_data = rs1_data_reg[1];
+			issueque_rs2_data = rs2_data_reg[1];
+			issueque_rd_tag = rd_tag_reg[1];
+			issueque_opcode = opcode_reg[1];
+		end
+		default: begin
+			issueque_rs1_data = 32'b0;
+			issueque_rs2_data = 32'b0;
+			issueque_rd_tag = 6'b0;
+			issueque_opcode = 4'b0;
+		end
+	endcase
+end
 endmodule
