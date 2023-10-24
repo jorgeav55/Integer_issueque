@@ -38,6 +38,7 @@ module Shift_update_control(
 	enable_rs1_data,
 	enable_rs2_data,
 	data_sel,
+	valid_clear,
 	issueque_full,
 	issueque_ready,
 	issueblk_done
@@ -74,7 +75,7 @@ output [3:0] sel_rs1;
 output [3:0] sel_rs2;
 output [3:0] enable_rs1_valid;
 output [3:0] enable_rs2_valid;
-output [3:0] enable_valid;
+output reg [3:0] enable_valid;
 output [3:0] enable_opcode;
 output [3:0] enable_rd_tag;
 output [3:0] enable_rs1_tag;
@@ -82,6 +83,7 @@ output [3:0] enable_rs2_tag;
 output [3:0] enable_rs1_data;
 output [3:0] enable_rs2_data;
 output reg [1:0] data_sel;
+output reg [3:0] valid_clear;
 output issueque_full;
 output reg issueque_ready;
 input issueblk_done;
@@ -151,22 +153,50 @@ always @* begin
 	if (shift_valid3 && shift_rs1_valid3 && shift_rs2_valid3) begin
 		issueque_ready = 1'b1;
 		data_sel = 2'b11;
+		valid_clear = 4'b1000;
+		enable_valid = {1'b1, shift_en[2:0]};
 	end
 	else if (shift_valid2 && shift_rs1_valid2 && shift_rs2_valid2) begin
 		issueque_ready = 1'b1;
 		data_sel = 2'b10;
+		if (shift_en[3] == 1'b1) begin
+			valid_clear = 4'b1000;
+			enable_valid = {1'b1, shift_en[2:0]};
+		end
+		else begin
+			valid_clear = 4'b0100;
+			enable_valid ={shift_en[3], 1'b1, shift_en[1:0]};
+		end
 	end
 	else if (shift_valid1 && shift_rs1_valid1 && shift_rs2_valid1) begin
 		issueque_ready = 1'b1;
 		data_sel = 2'b01;
+		if (shift_en[2] == 1'b1) begin
+			valid_clear = 4'b0100;
+			enable_valid ={shift_en[3], 1'b1, shift_en[1:0]};
+		end
+		else begin
+			valid_clear = 4'b0010;
+			enable_valid ={shift_en[3:2], 1'b1, shift_en[0]};
+		end
 	end
 	else if (shift_valid0 && shift_rs1_valid0 && shift_rs2_valid0) begin
 		issueque_ready = 1'b1;
 		data_sel = 2'b00;
+		if (shift_en[1] == 1'b1) begin
+			valid_clear = 4'b0010;
+			enable_valid ={shift_en[3:2], 1'b1, shift_en[0]};
+		end
+		else begin
+			valid_clear = 4'b0001;
+			enable_valid ={shift_en[3:1], 1'b1};
+		end
 	end
 	else begin
 		issueque_ready = 1'b0;
 		data_sel = 2'b11;
+		valid_clear = 4'b0000;
+		enable_valid = shift_en;
 	end
 end
 

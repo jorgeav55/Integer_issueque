@@ -13,6 +13,7 @@ module Queue_Shift_Register (
 	sel_rs1,
 	sel_rs2,
 	data_sel,
+	valid_clear,
 	CDB_data,
 	dispatch_rs1_data,
 	dispatch_rs1_tag,
@@ -65,6 +66,7 @@ input [3:0] enable_rs2_data;
 input [3:0] sel_rs1;
 input [3:0] sel_rs2;
 input [1:0] data_sel;
+input [3:0] valid_clear;
 input [31:0] CDB_data;
 input [31:0] dispatch_rs1_data;
 input [5:0] dispatch_rs1_tag;
@@ -106,6 +108,7 @@ wire rs1_valid_input [3:0];
 wire rs1_valid_reg [4:0];
 wire rs2_valid_input [3:0];
 wire rs2_valid_reg [4:0];
+wire valid_input [3:0];
 wire valid_reg [4:0];
 wire [3:0] opcode_reg [4:0];
 wire [5:0] rd_tag_reg [4:0];
@@ -252,7 +255,7 @@ generate
 		#(
 			.DATA_WIDTH(1)) Reg_valid
 		(
-			.data_in			(valid_reg[i]),
+			.data_in			(valid_input[i]),
 			.dafault_data	(1'b0),
 			.reset			(reset),
 			.enable			(enable_valid[i]),
@@ -262,6 +265,7 @@ generate
 		);
 		assign {rs1_valid_input[i], rs1_data_input[i]} = (sel_rs1[i] == 1'b1) ? {1'b1, CDB_data} : {rs1_valid_reg[i], rs1_data_reg[i]};
 		assign {rs2_valid_input[i], rs2_data_input[i]} = (sel_rs2[i] == 1'b1) ? {1'b1, CDB_data} : {rs2_valid_reg[i], rs2_data_reg[i]};
+		assign valid_input[i] = (valid_clear[i] == 1'b1) ? 1'b0 : valid_reg[i];
 	end
 endgenerate
 

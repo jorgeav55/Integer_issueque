@@ -68,6 +68,7 @@ wire shift_rs2_valid2;
 wire shift_rs2_valid3;
 wire [3:0] sel_rs1;
 wire [3:0] sel_rs2;
+wire [3:0] valid_clear;
 wire [3:0] enable_rs1_valid;
 wire [3:0] enable_rs2_valid;
 wire [3:0] enable_valid;
@@ -94,6 +95,7 @@ Queue_Shift_Register Int_Res_Stat(
 	.sel_rs1(sel_rs1),
 	.sel_rs2(sel_rs2),
 	.data_sel(data_sel),
+	.valid_clear(valid_clear),
 	.CDB_data(cdb_data),
 	.dispatch_rs1_data(dispatch_rs1_data),
 	.dispatch_rs1_tag(dispatch_rs1_tag),
@@ -171,6 +173,7 @@ Shift_update_control Shift_control(
 	.enable_rs1_data(enable_rs1_data),
 	.enable_rs2_data(enable_rs2_data),
 	.data_sel(data_sel),
+	.valid_clear(valid_clear),
 	.issueque_full(issueque_full),
 	.issueque_ready(issueque_ready),
 	.issueblk_done(issueblk_done)
