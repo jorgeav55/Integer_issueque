@@ -150,6 +150,7 @@ assign shift_rs2_valid3 = rs2_valid_reg[4];
 
 genvar i;
 generate
+//i empieza con cero, pero los enables de abajo solo seleccionan del 1 en adelante
 	for (i=0;i<4;i=i+1) begin: ShtReg
 		Register 
 		#(
@@ -259,8 +260,8 @@ generate
 			.clk				(clk),
 			.data_out		(valid_reg[i+1])
 		);
-		assign {rs1_valid_input[i], rs1_data_input[i]} = (sel_rs1[i] == 1'b1) ? {1'b0, CDB_data} : {rs1_valid_reg[i], rs1_data_reg[i]};
-		assign {rs2_valid_input[i], rs2_data_input[i]} = (sel_rs2[i] == 1'b1) ? {1'b0, CDB_data} : {rs2_valid_reg[i], rs2_data_reg[i]};
+		assign {rs1_valid_input[i], rs1_data_input[i]} = (sel_rs1[i] == 1'b1) ? {1'b1, CDB_data} : {rs1_valid_reg[i], rs1_data_reg[i]};
+		assign {rs2_valid_input[i], rs2_data_input[i]} = (sel_rs2[i] == 1'b1) ? {1'b1, CDB_data} : {rs2_valid_reg[i], rs2_data_reg[i]};
 	end
 endgenerate
 

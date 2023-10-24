@@ -101,7 +101,7 @@ assign sel_rs2[3] = CDB_valid && ( (!shift_en[3] && (CDB_tag == shift_rs2_tag3) 
 
 assign issueque_full = shift_valid0 & shift_valid1 & shift_valid2 & shift_valid3;
 
-assign enable_valid = shift_en;
+//assign enable_valid = shift_en;
 assign enable_opcode = shift_en;
 assign enable_rd_tag = shift_en;
 assign enable_rs1_tag = shift_en;
@@ -122,6 +122,7 @@ assign enable_rs2_valid[0] = (CDB_tag == shift_rs2_tag0) && CDB_valid && !shift_
 assign enable_rs2_valid[1] = (CDB_tag == shift_rs2_tag1) && CDB_valid && !shift_rs2_valid1 ? 1'b1 : shift_en[1];
 assign enable_rs2_valid[2] = (CDB_tag == shift_rs2_tag2) && CDB_valid && !shift_rs2_valid2 ? 1'b1 : shift_en[2];
 assign enable_rs2_valid[3] = (CDB_tag == shift_rs2_tag3) && CDB_valid && !shift_rs2_valid3 ? 1'b1 : shift_en[3];
+
 
 always @* begin
 	if (issueblk_done) begin
@@ -147,19 +148,19 @@ always @* begin
 end
 
 always @* begin
-	if (shift_valid3 && shift_rs1_valid0 && shift_rs2_valid0) begin
+	if (shift_valid3 && shift_rs1_valid3 && shift_rs2_valid3) begin
 		issueque_ready = 1'b1;
 		data_sel = 2'b11;
 	end
-	else if (shift_valid2 && shift_rs1_valid1 && shift_rs2_valid1) begin
+	else if (shift_valid2 && shift_rs1_valid2 && shift_rs2_valid2) begin
 		issueque_ready = 1'b1;
 		data_sel = 2'b10;
 	end
-	else if (shift_valid1 && shift_rs1_valid2 && shift_rs2_valid2) begin
+	else if (shift_valid1 && shift_rs1_valid1 && shift_rs2_valid1) begin
 		issueque_ready = 1'b1;
 		data_sel = 2'b01;
 	end
-	else if (shift_valid0 && shift_rs1_valid3 && shift_rs2_valid3) begin
+	else if (shift_valid0 && shift_rs1_valid0 && shift_rs2_valid0) begin
 		issueque_ready = 1'b1;
 		data_sel = 2'b00;
 	end
