@@ -85,7 +85,7 @@ output [3:0] enable_rs2_data;
 output reg [1:0] data_sel;
 output reg [3:0] valid_clear;
 output issueque_full;
-output reg issueque_ready;
+output issueque_ready;
 input issueblk_done;
 
 reg [3:0] shift_en;
@@ -124,40 +124,43 @@ assign enable_rs2_valid[0] = (CDB_tag == shift_rs2_tag0) && CDB_valid && !shift_
 assign enable_rs2_valid[1] = (CDB_tag == shift_rs2_tag1) && CDB_valid && !shift_rs2_valid1 ? 1'b1 : shift_en[1];
 assign enable_rs2_valid[2] = (CDB_tag == shift_rs2_tag2) && CDB_valid && !shift_rs2_valid2 ? 1'b1 : shift_en[2];
 assign enable_rs2_valid[3] = (CDB_tag == shift_rs2_tag3) && CDB_valid && !shift_rs2_valid3 ? 1'b1 : shift_en[3];
-
+assign issueque_ready = (shift_valid3 && shift_rs1_valid3 && shift_rs2_valid3) || 
+								(shift_valid2 && shift_rs1_valid2 && shift_rs2_valid2) || 
+								(shift_valid1 && shift_rs1_valid1 && shift_rs2_valid1) || 
+								(shift_valid0 && shift_rs1_valid0 && shift_rs2_valid0) ?
+								1'b1 : 1'b0;
 
 always @* begin
-	if (issueblk_done) begin
-		if (!(shift_valid3)) begin
-			shift_en = 4'b1111;
-		end
-		else if (!(shift_valid2)) begin
-			shift_en = 4'b0111;
-		end
-		else if (!(shift_valid1)) begin
-			shift_en = 4'b0011;
-		end
-		else if (!(shift_valid0) && dispatch_enable) begin
-			shift_en = 4'b0001;
-		end
-		else begin
-			shift_en = 4'b0000;
-		end
+	
+	if (!(shift_valid3)) begin
+		shift_en = 4'b1111;
 	end
+	else if (!(shift_valid2)) begin
+		shift_en = 4'b0111;
+	end
+	else if (!(shift_valid1)) begin
+		shift_en = 4'b0011;
+	end
+	else if (!(shift_valid0) && dispatch_enable) begin
+		shift_en = 4'b0001;
+	end
+	/*else if (issueblk_done) begin
+		shift_en = 4'b0000;
+	end*/
 	else begin
 		shift_en = 4'b0000;
 	end
 end
 
 always @* begin
-	if (shift_valid3 && shift_rs1_valid3 && shift_rs2_valid3) begin
-		issueque_ready = 1'b1;
+	if (shift_valid3 && shift_rs1_valid3 && shift_rs2_valid3 && issueblk_done) begin
+		//issueque_ready = 1'b1;
 		data_sel = 2'b11;
 		valid_clear = 4'b1000;
 		enable_valid = {1'b1, shift_en[2:0]};
 	end
-	else if (shift_valid2 && shift_rs1_valid2 && shift_rs2_valid2) begin
-		issueque_ready = 1'b1;
+	else if (shift_valid2 && shift_rs1_valid2 && shift_rs2_valid2 && issueblk_done) begin
+		//issueque_ready = 1'b1;
 		data_sel = 2'b10;
 		if (shift_en[3] == 1'b1) begin
 			valid_clear = 4'b1000;
@@ -168,8 +171,8 @@ always @* begin
 			enable_valid ={shift_en[3], 1'b1, shift_en[1:0]};
 		end
 	end
-	else if (shift_valid1 && shift_rs1_valid1 && shift_rs2_valid1) begin
-		issueque_ready = 1'b1;
+	else if (shift_valid1 && shift_rs1_valid1 && shift_rs2_valid1 && issueblk_done) begin
+		//issueque_ready = 1'b1;
 		data_sel = 2'b01;
 		if (shift_en[2] == 1'b1) begin
 			valid_clear = 4'b0100;
@@ -180,8 +183,8 @@ always @* begin
 			enable_valid ={shift_en[3:2], 1'b1, shift_en[0]};
 		end
 	end
-	else if (shift_valid0 && shift_rs1_valid0 && shift_rs2_valid0) begin
-		issueque_ready = 1'b1;
+	else if (shift_valid0 && shift_rs1_valid0 && shift_rs2_valid0 && issueblk_done) begin
+		//issueque_ready = 1'b1;
 		data_sel = 2'b00;
 		if (shift_en[1] == 1'b1) begin
 			valid_clear = 4'b0010;
@@ -193,7 +196,7 @@ always @* begin
 		end
 	end
 	else begin
-		issueque_ready = 1'b0;
+		//issueque_ready = 1'b0;
 		data_sel = 2'b11;
 		valid_clear = 4'b0000;
 		enable_valid = shift_en;

@@ -6,30 +6,36 @@ wire empty;
 wire [31:0] instruction;
 wire [31:0] current_PC;
 
-wire [3:0] dispatch_opcode, issueque_opcode;
+wire [3:0] dispatch_opcode, 
+				issueque_opcode,
+				issueque_opcode_mul;
 wire dispatch_en_integer,
      dispatch_en_ld_st,
      dispatch_en_mul,
      dispatch_en_div,
 	  dispatch_rs1_valid,
 	  dispatch_rs2_valid, 
-	  issueque_full_integer;
+	  issueque_full_integer,
+	  issueque_full_mul;
 wire [5:0] 	dispatch_rd_tag,
 				issueque_rd_tag,
+				issueque_rd_tag_mul,
 				dispatch_rs1_tag,
 				dispatch_rs2_tag;
 wire [31:0]	dispatch_rs1_data,
 				dispatch_rs2_data,
 				issueque_rs1_data,
-				issueque_rs2_data;
+				issueque_rs2_data,
+				issueque_rs1_data_mul,
+				issueque_rs2_data_mul;
 wire jb_en;
 wire [31:0]	jb_address;
 
 
-wire  	issueque_ready;
+wire  	issueque_ready,
+			issueque_ready_mul;
 reg 	issueque_ready_reg;
 reg	issueque_full_ld_st;
-reg  	issueque_full_mul;
 reg	issueque_full_div;
 
 reg [5:0] CDB_tag;
@@ -40,7 +46,7 @@ reg CDB_branch_taken;
 
 reg clk;
 reg reset;
-reg issueblk_done;
+reg issueblk_done, issueblk_done_mul;
 wire rd_en;
 
 reg [5:0] CDB_tag_random [63:0];
@@ -124,15 +130,39 @@ Integer_Reservation_Station UUT2(
 	.issueblk_done(issueblk_done)
 );
 
+Integer_Reservation_Station UUT3( 
+	.reset(reset),
+	.clk(clk),
+	.dispatch_rs1_data(dispatch_rs1_data),
+	.dispatch_rs1_tag(dispatch_rs1_tag),
+	.dispatch_rs1_data_val(~dispatch_rs1_valid),
+	.dispatch_rs2_data(dispatch_rs2_data),
+	.dispatch_rs2_tag(dispatch_rs2_tag),
+	.dispatch_rs2_data_val(~dispatch_rs2_valid),
+	.dispatch_opcode(4'b0000),
+	.dispatch_rd_tag(dispatch_rd_tag),
+	.dispatch_enable(dispatch_en_mul),
+	.issueque_full(issueque_full_mul),
+	.cdb_tag(CDB_tag),
+	.cdb_data(CDB_data),
+	.cdb_valid(CDB_valid),
+	.issueque_ready(issueque_ready_mul),
+	.issueque_rs1_data(issueque_rs1_data_mul),
+	.issueque_rs2_data(issueque_rs2_data_mul),
+	.issueque_rd_tag(issueque_rd_tag_mul),
+	.issueque_opcode(issueque_opcode_mul),
+	.issueblk_done(issueblk_done_mul)
+);
+
 initial begin
-	issueblk_done = 1'b1;
+	issueblk_done = 1'b0;
 	rand_alt = 1'b0;
 	i = 1'b0;
 	j = 1'b0;
 	k = 1'b0;
 //	issueque_full_integer = 1'b0;
    issueque_full_ld_st = 1'b0;
-   issueque_full_mul = 1'b0;
+//   issueque_full_mul = 1'b0;
    issueque_full_div = 1'b0;
 	CDB_tag = 6'b0;
 	CDB_valid = 1'b0;
@@ -144,7 +174,7 @@ initial begin
 	//rd_en = 1'b1;
 	#2
 	reset			= 1'b0;
-	assign issueque_ready_reg = issueque_ready ;
+	//assign issueque_ready_reg = issueque_ready ;
 end
 always begin
 	#1 
@@ -163,15 +193,28 @@ always begin
 	end
 
 always begin 
-	//#(($urandom_range(0, 2))*2+1);
+	#(($urandom_range(1, 3))*2+1);
 	@(posedge clk);
 	random_CDB();
 
 end
 
 always begin
-	capture_CDB();
+	//@(posedge clk);
+	#1
+	issueblk;
+end
+
+always begin
+	//@(posedge clk);
+	#1
+	issueblk_mul;
+end
+
+always begin
 	@(posedge clk);
+	capture_CDB();
+	
 end
 
 /*always begin
@@ -186,9 +229,14 @@ por lo tanto, el inidice i va aumentando cada que un CDB es publicado
 */
 
 task capture_CDB(); begin
-	if ((dispatch_en_integer || dispatch_en_mul || dispatch_en_div) && ~reset ) begin
+	if (issueque_ready && issueblk_done && ~reset ) begin
 	//Arreglo para guradar registros rd con tag publicados en el CDB  que aun no son validos
-	CDB_tag_random[i] = dispatch_rd_tag;
+	CDB_tag_random[i] = issueque_rd_tag;
+	i = i + 1'b1;
+	end
+	if (issueque_ready_mul && issueblk_done_mul && ~reset ) begin
+	//Arreglo para guradar registros rd con tag publicados en el CDB  que aun no son validos
+	CDB_tag_random[i] = issueque_rd_tag_mul;
 	i = i + 1'b1;
 	end
 end
@@ -201,6 +249,41 @@ han sido guardados en la task anterior, al sacar un Tag  y publicarlo de forma a
 -Se valida que la respuesta de los tags este fuera de orden a como se despacharon las instrucciones.
 Por ultimo se hace un reordenamiento del arreglo, para evitar publicar tags que ya han sido publicados
 */
+
+task issueblk(); begin : blk_done
+	integer delay;
+	rand_delay =  $urandom_range(0, 3);
+	//Condicion para validar que una intruccion branch llego al dispatch
+	if (~reset)begin
+	//For para agregar unos ciclos de reloj aleatorios, hasta que se publica el resultado
+	for (delay = 0; delay<rand_delay; delay=delay+1)
+		begin
+			 @(posedge clk);
+		end
+		issueblk_done = 1'b1;
+		@(posedge clk);
+		issueblk_done = 1'b0;
+	end
+end
+endtask
+
+task issueblk_mul(); begin : blk_done_mul
+	integer delay;
+	rand_delay =  $urandom_range(0, 3);
+	//Condicion para validar que una intruccion branch llego al dispatch
+	if (~reset)begin
+	//For para agregar unos ciclos de reloj aleatorios, hasta que se publica el resultado
+	for (delay = 0; delay<rand_delay; delay=delay+1)
+		begin
+			 @(posedge clk);
+		end
+		issueblk_done_mul = 1'b1;
+		@(posedge clk);
+		issueblk_done_mul = 1'b0;
+	end
+end
+endtask
+
 task random_CDB();
 begin: rand
 	//Random del la longitud del arreglo con tags despachados
@@ -208,7 +291,7 @@ begin: rand
 	rand_alt = $urandom_range(0, i-1'b1);
 	rand_delay =  $urandom_range(1, 2);
 	//Publicacion del tag del CDB
-	if (issueque_ready_reg == 1'b1) begin
+	if (i != 0) begin
 	CDB_tag = CDB_tag_random[rand_alt];
 	CDB_valid = 1'b1;
 	CDB_data = $random;
@@ -296,7 +379,7 @@ estan llenas
 -Se manda un full de las unidades por un tiempo aleatorio dado por una variable random
 -Se hace un issueque_full_ = 1'b1; por lo tanto el dispatch deberia hacer stall
 el tiempo que lo determine la variable urandom_range entre 2 y 4 ciclos.*/
-task mul_unit_full;
+/*task mul_unit_full;
 begin: mul_full
 	integer delay;
 	//Condicion cuando se despacha una multiplicacion
@@ -328,7 +411,7 @@ begin: mul_full
 	end
 end
 endtask
-
+*/
 
 endmodule
 
