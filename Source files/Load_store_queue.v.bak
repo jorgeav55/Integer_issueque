@@ -1,0 +1,50 @@
+module Load_store_queue	(
+	reset,
+	clk,
+	dispatch_rs1_data,
+	dispatch_rs1_tag,
+	dispatch_rs1_data_val,
+	dispatch_rs2_data,
+	dispatch_rs2_tag,
+	dispatch_rs2_data_val,
+	dispatch_opcode,
+	dispatch_rd_tag,
+	dispatch_enable,
+	issueque_full,
+	cdb_tag,
+	cdb_data,
+	cdb_valid,
+	issueque_ready,
+	issueque_rs1_data,
+	issueque_rs2_data,
+	issueque_rd_tag,
+	issueque_opcode,
+	issueblk_done
+);
+
+//Input and Output declaration
+input reset;
+input clk;
+input [31:0] dispatch_rs1_data;
+input [5:0] dispatch_rs1_tag;
+input dispatch_rs1_data_val;
+input [31:0] dispatch_rs2_data;
+input [5:0] dispatch_rs2_tag;
+input dispatch_rs2_data_val;
+input [1:0] dispatch_opcode;
+input [5:0] dispatch_rd_tag;
+input dispatch_enable;
+output issueque_full;
+input [5:0] cdb_tag;
+input [31:0] cdb_data;
+input cdb_valid;
+output issueque_ready;
+output [31:0] issueque_rs1_data;
+output [31:0] issueque_rs2_data;
+output [5:0] issueque_rd_tag;
+output [3:0] issueque_opcode;
+input issueblk_done;
+
+
+
+endmodule
